@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ثقة وأمان - Trust & Safety</title>
+    <style>
+        :root {
+            --bg: #0a0f1e;
+            --surface: #111827;
+            --surface-light: #1a2236;
+            --gold: #d4a843;
+            --gold-light: #f0d78c;
+            --green: #2ecc71;
+            --red: #e74c3c;
+            --blue-accent: #3b82f6;
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+            --border: #1e293b;
+            --radius: 16px;
+            --radius-sm: 10px;
+            --shadow: 0 8px 32px rgba(0,0,0,0.4);
+            --transition: 0.3s cubic-bezier(0.4,0,0.2,1);
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Segoe UI', 'Tahoma', 'Cairo', sans-serif;
+            background: var(--bg); color: var(--text); min-height:100vh;
+            display:flex; justify-content:center; align-items:center;
+            background-image: radial-gradient(ellipse at 20% 50%, rgba(212,168,67,0.06) 0%, transparent 60%),
+            radial-gradient(ellipse at 80% 20%, rgba(59,130,246,0.05) 0%, transparent 60%),
+            radial-gradient(ellipse at 50% 80%, rgba(46,204,113,0.04) 0%, transparent 60%);
+        }
+        .app-container {
+            width:100%; max-width:480px; min-height:90vh; background:var(--surface);
+            border-radius:24px; box-shadow:var(--shadow), 0 0 0 1px var(--border);
+            overflow:hidden; display:flex; flex-direction:column; position:relative;
+        }
+        .screen { display:none; flex-direction:column; flex:1; padding:20px; overflow-y:auto; }
+        .screen.active { display:flex; }
+
+        .splash-content { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:16px; }
+        .logo-shield { position:relative; width:130px; height:150px; animation: floatShield 3s ease-in-out infinite; }
+        .shield-body { width:0; height:0; border-left:55px solid transparent; border-right:55px solid transparent; border-bottom:100px solid var(--gold); margin:0 auto; filter:drop-shadow(0 4px 20px rgba(212,168,67,0.5)); }
+        .shield-body::after { content:''; position:absolute; top:30px; left:-35px; width:70px; height:70px; background:var(--surface); border-radius:50%; border:3px solid var(--gold-light); }
+        .shield-keys { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:40px; z-index:2; }
+        @keyframes floatShield { 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-10px); } }
+        .splash-title { font-size:2rem; font-weight:800; color:var(--gold); }
+        .splash-subtitle { font-size:0.9rem; color:var(--text-muted); max-width:300px; line-height:1.6; }
+        .btn {
+            padding:14px 24px; border-radius:30px; border:none; font-size:1rem; font-weight:700;
+            cursor:pointer; transition:var(--transition); text-align:center; font-family:inherit;
+            letter-spacing:0.5px; display:block; width:100%;
+        }
+        .btn-gold { background:linear-gradient(135deg, var(--gold), #b8861e); color:#1a1a1a; box-shadow:0 4px 20px rgba(212,168,67,0.35); }
+        .btn-gold:hover { transform:translateY(-2px); box-shadow:0 8px 30px rgba(212,168,67,0.5); }
+        .btn-outline { background:transparent; border:2px solid var(--gold); color:var(--gold); }
+        .btn-outline:hover { background:rgba(212,168,67,0.1); }
+        .btn-small { padding:8px 16px; font-size:0.85rem; border-radius:20px; width:auto; display:inline-block; }
+        .btn-danger { background:var(--red); color:white; }
+        .btn-green { background:var(--green); color:white; }
+        .btn-ghost { background:transparent; border:1px solid var(--border); color:var(--text); }
+        .splash-buttons { display:flex; flex-direction:column; gap:10px; width:100%; max-width:280px; margin-top:10px; }
+
+        .app-header { display:flex; align-items:center; justify-content:space-between; padding:10px 0 16px; border-bottom:1px solid var(--border); margin-bottom:16px; }
+        .user-info { display:flex; align-items:center; gap:10px; }
+        .avatar { width:42px; height:42px; border-radius:50%; background:linear-gradient(135deg,var(--gold),#b8861e); display:flex; align-items:center; justify-content:center; font-weight:800; color:#1a1a1a; font-size:1.2rem; }
+        .username { font-weight:700; }
+        .badge-sub { font-size:0.7rem; background:var(--green); color:white; padding:3px 10px; border-radius:12px; margin-top:2px; display:inline-block; }
+
+        .rep-card { background:var(--surface-light); border-radius:var(--radius); padding:16px; margin-bottom:16px; border:1px solid var(--border); }
+        .rep-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+        .rep-score { font-size:2.5rem; font-weight:900; color:var(--gold); }
+        .rep-bar-outer { height:8px; background:var(--border); border-radius:10px; overflow:hidden; }
+        .rep-bar-inner { height:100%; background:linear-gradient(90deg, var(--red), var(--gold), var(--green)); border-radius:10px; transition:width 0.6s; }
+        .rep-details { display:flex; justify-content:space-around; margin-top:10px; font-size:0.8rem; color:var(--text-muted); }
+        .rep-details span { font-weight:700; color:var(--text); }
+
+        .fab { position:sticky; bottom:20px; align-self:center; width:60px; height:60px; border-radius:50%;
+            background:linear-gradient(135deg,var(--gold),#b8861e); border:none; font-size:2rem;
+            color:#1a1a1a; cursor:pointer; box-shadow:0 8px 28px rgba(212,168,67,0.5);
+            transition:var(--transition); z-index:10; display:flex; align-items:center; justify-content:center; margin-top:10px; }
+        .fab:hover { transform:scale(1.08); }
+
+        .bottom-nav { display:flex; justify-content:space-around; align-items:center; padding:12px 8px; background:var(--surface-light); border-top:1px solid var(--border); margin-top:auto; border-radius:20px 20px 0 0; }
+        .nav-item { display:flex; flex-direction:column; align-items:center; gap:4px; cursor:pointer; color:var(--text-muted); font-size:0.7rem; transition:var(--transition); padding:6px 12px; border-radius:12px; border:none; background:transparent; font-family:inherit; }
+        .nav-item.active { color:var(--gold); }
+        .nav-icon { font-size:1.4rem; }
+
+        .modal-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.75); z-index:100; justify-content:center; align-items:center; }
+        .modal-overlay.active { display:flex; }
+        .modal { background:var(--surface); border-radius:var(--radius); padding:24px; width:90%; max-width:440px; max-height:80vh; overflow-y:auto; border:1px solid var(--border); box-shadow:var(--shadow); }
+        .modal h3 { text-align:center; color:var(--gold); margin-bottom:16px; font-size:1.3rem; }
+        .form-group { margin-bottom:14px; }
+        .form-group label { display:block; margin-bottom:5px; font-weight:600; color:var(--text-muted); font-size:0.85rem; }
+        .form-group input, .form-group select, .form-group textarea { width:100%; padding:12px 14px; border-radius:var(--radius-sm); border:1px solid var(--border); background:var(--bg); color:var(--text); font-family:inherit; font-size:0.95rem; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline:none; border-color:var(--gold); box-shadow:0 0 0 3px rgba(212,168,67,0.15); }
+
+        .commitment-item { background:var(--surface-light); border-radius:var(--radius-sm); padding:14px; margin-bottom:10px; border:1px solid var(--border); }
+        .commitment-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+        .commitment-type { font-size:0.75rem; padding:4px 10px; border-radius:14px; background:rgba(212,168,67,0.2); color:var(--gold); }
+        .status-active { background:rgba(59,130,246,0.2); color:var(--blue-accent); }
+        .status-completed { background:rgba(46,204,113,0.2); color:var(--green); }
+        .tabs { display:flex; gap:4px; margin-bottom:16px; background:var(--surface-light); border-radius:25px; padding:4px; }
+        .tab { flex:1; text-align:center; padding:10px; border-radius:22px; cursor:pointer; font-size:0.8rem; font-weight:600; color:var(--text-muted); transition:var(--transition); border:none; background:transparent; font-family:inherit; }
+        .tab.active { background:var(--gold); color:#1a1a1a; }
+
+        .trust-graph { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; padding:10px 0; }
+        .trust-node { width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.7rem; font-weight:700; background:var(--green); color:white; }
+        .trust-node.muted { background:var(--border); color:var(--text-muted); }
+
+        .about-section { margin-bottom:16px; }
+        .about-section h4 { color:var(--gold-light); margin-bottom:6px; }
+        .about-section p, .about-section li { font-size:0.8rem; color:var(--text-muted); line-height:1.6; }
+        .about-section ul { padding-right:20px; }
+
+        .donate-box { background:var(--surface-light); border-radius:12px; padding:16px; margin-top:16px; border:1px solid var(--gold); }
+        .donate-box h4 { color:var(--gold); margin-bottom:8px; }
+        .donate-box p { font-size:0.75rem; color:var(--text-muted); margin-bottom:10px; }
+
+        @keyframes pulse { 0%,100%{ opacity:1; } 50%{ opacity:0.5; } }
+        .slide-up { animation: slideUp 0.4s ease forwards; }
+        @keyframes slideUp { from{ opacity:0; transform:translateY(20px); } to{ opacity:1; transform:translateY(0); } }
+        ::-webkit-scrollbar { width:4px; }
+        ::-webkit-scrollbar-track { background:transparent; }
+        ::-webkit-scrollbar-thumb { background:var(--border); border-radius:10px; }
+        @media (max-width:400px) {
+            .app-container { border-radius:0; min-height:100vh; }
+            .splash-title { font-size:1.5rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="app-container" id="appContainer">
+
+    <!-- SPLASH SCREEN -->
+    <div class="screen active" id="screenSplash">
+        <div class="splash-content">
+            <div class="logo-shield"><div class="shield-body"></div><div class="shield-keys">🔐</div></div>
+            <h1 class="splash-title" id="splashTitle">ثقة وأمان</h1>
+            <p class="splash-subtitle" id="splashSubtitle">ابنِ سمعتك الرقمية، مفتاحًا بمفتاح<br>Build your reputation, key by key</p>
+            <div style="background:var(--surface-light);border-radius:12px;padding:12px;width:100%;max-width:280px;text-align:center;margin-top:8px;">
+                <p style="color:var(--text-muted);font-size:0.8rem;" id="splashInfo">النسخة المجانية: معاملات تجريبية فقط. الاشتراك السنوي 1 Pi للوصول الكامل.</p>
+                <button class="btn btn-outline btn-small" onclick="startFreeTrial()" id="btnFreeTrial">🆓 تجربة مجانية</button>
+                <button class="btn btn-gold btn-small" style="margin-top:8px;" onclick="startSubscribed()" id="btnSubscribeNow">🌟 اشترك الآن (1 Pi)</button>
+            </div>
+            <div class="splash-buttons">
+                <button class="btn btn-gold" onclick="setLanguage('ar')">🇸🇦 العربية</button>
+                <button class="btn btn-outline" onclick="setLanguage('en')">🇬🇧 English</button>
+                <button class="btn btn-gold pulse" onclick="startApp()">🚀 ابدأ الآن</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP SCREEN -->
+    <div class="screen" id="screenMain">
+        <div class="app-header">
+            <div class="user-info">
+                <div class="avatar" id="userAvatar">ف</div>
+                <div><div class="username" id="displayUsername">@Fuad207</div><span class="badge-sub" id="badgeSub">مشترك</span></div>
+            </div>
+            <span style="font-size:0.75rem;color:var(--text-muted);" id="langIndicator">AR</span>
+        </div>
+
+        <div class="rep-card slide-up">
+            <div class="rep-header"><span style="color:var(--text-muted);" id="repLabel">درجة ميثاق</span><span class="rep-score" id="mithaqScore">87</span></div>
+            <div class="rep-bar-outer"><div class="rep-bar-inner" id="repBar" style="width:87%;"></div></div>
+            <div class="rep-details">
+                <div>✅ <span id="labelCompleted">إنجاز</span> <span id="statCompleted">94</span></div>
+                <div>👥 <span id="labelDiversity">تنوع</span> <span id="statDiversity">62</span></div>
+                <div>🔒 <span id="labelStake">رهان</span> <span id="statStake">78</span></div>
+            </div>
+            <div class="trust-graph">
+                <span style="font-size:0.7rem;color:var(--text-muted);width:100%;text-align:center;" id="trustGraphLabel">شبكة ثقتك</span>
+                <div class="trust-node">أح</div><div class="trust-node">مح</div><div class="trust-node">سي</div><div class="trust-node">فه</div><div class="trust-node muted">+12</div>
+            </div>
+        </div>
+
+        <div style="display:flex; gap:8px; margin-bottom:16px;">
+            <input type="text" placeholder="أدخل رقم العقد للانضمام" id="joinContractId" style="flex:1; padding:10px; border-radius:20px; border:1px solid var(--border); background:var(--bg); color:var(--text);">
+            <button class="btn btn-small btn-gold" onclick="joinContract()" id="btnJoin">انضمام</button>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('pending')" id="tabPending">قيد الانتظار</button>
+            <button class="tab" onclick="switchTab('active')" id="tabActive">نشطة</button>
+            <button class="tab" onclick="switchTab('completed')" id="tabCompleted">مكتملة</button>
+        </div>
+
+        <div id="commitmentList" style="flex:1; overflow-y:auto; max-height:250px;"></div>
+
+        <button class="fab" onclick="openNewContractModal()">+</button>
+
+        <div class="bottom-nav">
+            <button class="nav-item active" onclick="navigateTo('home')"><span class="nav-icon">🏠</span><span id="navHome">الرئيسية</span></button>
+            <button class="nav-item" onclick="openModal('modalSettings')"><span class="nav-icon">⚙️</span><span id="navSettings">الإعدادات</span></button>
+            <button class="nav-item" onclick="openModal('modalSupport')"><span class="nav-icon">💬</span><span id="navSupport">الدعم</span></button>
+            <button class="nav-item" onclick="openModal('modalAbout')"><span class="nav-icon">ℹ️</span><span id="navAbout">حول</span></button>
+        </div>
+    </div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="modalNewContract">
+    <div class="modal">
+        <h3 id="newContractTitle">📝 إنشاء عقد جديد</h3>
+        <div class="form-group"><label id="lblContractType">نوع العقد</label><select id="contractType" onchange="updateContractFields()">
+            <option value="sale" id="optSale">عقد بيع مباشر</option>
+            <option value="freelance" id="optFreelance">عقد عمل حر</option>
+            <option value="loan" id="optLoan">عقد قرض شخصي</option>
+            <option value="social" id="optSocial">تعهد اجتماعي</option>
+            <option value="rental" id="optRental">عقد إيجار مؤقت</option>
+        </select></div>
+        <div class="form-group"><label id="lblCounterparty">الطرف الآخر (اسم المستخدم)</label><input type="text" placeholder="@example" id="counterpartyInput"></div>
+        <div class="form-group"><label id="lblDesc">وصف الالتزام</label><textarea rows="2" id="descInput"></textarea></div>
+        <div class="form-group" id="groupValue"><label id="lblValue">القيمة (Pi)</label><input type="number" step="0.01" id="valueInput"></div>
+        <div class="form-group" id="groupDuration"><label id="lblDuration">مدة التسليم (ساعات)</label><input type="number" id="durationInput"></div>
+        <div class="form-group"><label id="lblSellerKey">رقمك السري (6 أرقام)</label><input type="password" maxlength="6" id="sellerKeyInput"></div>
+        <div class="form-group" id="groupStake"><label id="lblStake">الضمان المرهون (Pi) - اختياري</label><input type="number" step="0.01" id="stakeInput"></div>
+        <p style="font-size:0.7rem;color:var(--text-muted);text-align:center;" id="privacyNote">🔒 بياناتك مشفرة ولا يطلع عليها أحد</p>
+        <button class="btn btn-gold" onclick="submitContract()" id="btnSubmitContract">إرسال الالتزام</button>
+        <button class="btn btn-ghost" onclick="closeModal('modalNewContract')">إلغاء</button>
+    </div>
+</div>
+
+<!-- نافذة تفاصيل العقد للطرف الثاني -->
+<div class="modal-overlay" id="modalContractDetails">
+    <div class="modal">
+        <h3>📋 تفاصيل العقد</h3>
+        <div id="contractDetailsContent" style="font-size:0.9rem; line-height:1.8; color:var(--text); margin-bottom:16px;"></div>
+        <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:12px;">يرجى إدخال رقمك السري للموافقة على شروط العقد</p>
+        <div class="form-group"><label>رقمك السري (Buyer Key - 6 أرقام)</label><input type="password" maxlength="6" id="buyerKeyInput"></div>
+        <button class="btn btn-gold" onclick="acceptContract()">✅ أوافق وأدخل العقد</button>
+        <button class="btn btn-ghost" style="margin-top:8px;" onclick="closeModal('modalContractDetails')">رفض</button>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modalDelivery">
+    <div class="modal">
+        <h3>🔓 تحرير التسليم</h3>
+        <p style="text-align:center;color:var(--text-muted);">يجب إدخال الرقمين السريين</p>
+        <div class="form-group"><label>رقمك السري</label><input type="password" maxlength="6" id="deliverySellerKey"></div>
+        <div class="form-group"><label>الرقم السري للطرف الآخر</label><input type="password" maxlength="6" id="deliveryBuyerKey"></div>
+        <button class="btn btn-green" onclick="releaseFunds()">✅ تحرير</button>
+        <button class="btn btn-danger btn-small" onclick="openDispute()">⚠️ فتح نزاع</button>
+        <button class="btn btn-ghost" onclick="closeModal('modalDelivery')">إلغاء</button>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modalDispute">
+    <div class="modal"><h3>⚠️ فتح نزاع</h3><p style="text-align:center;">سيطلب ضمان تحكيم 10%</p><button class="btn btn-danger" onclick="confirmDispute()">تأكيد</button><button class="btn btn-ghost" onclick="closeModal('modalDispute')">إلغاء</button></div>
+</div>
+
+<div class="modal-overlay" id="modalSettings">
+    <div class="modal">
+        <h3>⚙️ الإعدادات</h3>
+        <div class="form-group"><label>اللغة</label><select id="settingsLang" onchange="setLanguage(this.value)">
+            <option value="ar">العربية</option>
+            <option value="en">English</option>
+        </select></div>
+        <div class="form-group"><label>المحفظة</label><input type="text" value="GABCD1234...XYZ" disabled></div>
+        <div class="form-group"><label>حالة الاشتراك</label><input type="text" id="settingsSubStatus" disabled></div>
+        <p style="font-size:0.75rem;color:var(--text-muted);">رسوم الاشتراك غير قابلة للاسترداد.</p>
+        <button class="btn btn-gold" onclick="toggleSubscription()" id="btnToggleSub">تغيير الاشتراك</button>
+        <button class="btn btn-danger" onclick="deleteAccount()">حذف الحساب</button>
+        <button class="btn btn-ghost" style="margin-top:10px;" onclick="closeModal('modalSettings')">إغلاق</button>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modalSupport">
+    <div class="modal">
+        <h3>💬 الدعم والاقتراحات</h3>
+        <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:12px;">الأسئلة الشائعة: كيف أستخدم التطبيق؟ كيف يعمل القفل المزدوج؟ ماذا أفعل في النزاع؟</p>
+        <div class="form-group"><label>اقتراحات</label><textarea rows="2" id="suggestionText" placeholder="اكتب اقتراحك هنا..."></textarea></div>
+        <button class="btn btn-gold" onclick="sendSuggestion()">إرسال اقتراح</button>
+        <div class="form-group" style="margin-top:16px;"><label>شكوى أو بلاغ</label><textarea rows="2" id="reportText" placeholder="صف المشكلة..."></textarea></div>
+        <button class="btn btn-danger" onclick="sendReport()">إرسال بلاغ</button>
+
+        <!-- خانة الدعم/التبرع -->
+        <div class="donate-box">
+            <h4>❤️ دعم التطبيق</h4>
+            <p>تبرعك يساعدنا على تطوير التطبيق. سيتم التحويل إلى محفظة المطور.</p>
+            <div class="form-group"><label>المبلغ (Pi)</label><input type="number" step="0.01" id="donateAmount" placeholder="1.00"></div>
+            <button class="btn btn-gold" onclick="donate()">تبرع الآن</button>
+        </div>
+        <button class="btn btn-ghost" style="margin-top:10px;" onclick="closeModal('modalSupport')">إغلاق</button>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modalAbout">
+    <div class="modal">
+        <h3 id="aboutTitle">ℹ️ حول التطبيق</h3>
+        <div class="about-section">
+            <h4 id="aboutIdeaTitle">💡 الفكرة</h4>
+            <p id="aboutIdeaText">"ثقة وأمان" هو منصة لا مركزية لبناء السمعة الرقمية على شبكة Pi. يسمح للأفراد بإبرام عقود ذكية مشروطة دون الحاجة لوسيط، مع ضمان الخصوصية التامة.</p>
+        </div>
+        <div class="about-section">
+            <h4 id="aboutWorkTitle">⚙️ كيف يعمل</h4>
+            <ul>
+                <li id="aboutWork1">أنشئ عقدًا مع الطرف الآخر واختر رقمًا سريًا.</li>
+                <li id="aboutWork2">يقبل الطرف الآخر العقد ويدخل رقمه السري (القفل المزدوج).</li>
+                <li id="aboutWork3">تُنشأ محفظة مؤقتة وتحفظ الأموال حتى التسليم.</li>
+                <li id="aboutWork4">عند تبادل الرقمين السريين، يتم تحرير الدفع وإثبات السمعة.</li>
+            </ul>
+        </div>
+        <div class="about-section">
+            <h4 id="aboutBenefitsTitle">🌟 الفوائد</h4>
+            <ul>
+                <li id="aboutBenefit1">سمعة رقمية لا يمكن تزويرها بفضل خوارزميات التنوع والرهان.</li>
+                <li id="aboutBenefit2">خصوصية مطلقة: حتى المطور لا يرى بياناتك.</li>
+                <li id="aboutBenefit3">عقود متنوعة (بيع، عمل حر، قرض، إيجار، تعهدات).</li>
+                <li id="aboutBenefit4">نظام نزاعات لا مركزي يحمي الطرفين.</li>
+            </ul>
+        </div>
+        <div class="about-section">
+            <p style="font-size:0.8rem;color:var(--text-muted);">الإصدار 1.0 – المطور: @Fuad207</p>
+        </div>
+        <button class="btn btn-gold" onclick="supportDeveloper()" id="btnSupport">❤️ دعم التطبيق (تبرع Pi)</button>
+        <button class="btn btn-ghost" style="margin-top:10px;" onclick="closeModal('modalAbout')">إغلاق</button>
+    </div>
+</div>
+
+<script>
+// ---------- CONSTANTS ----------
+const DEVELOPER_WALLET = "GABCD1234...XYZ";
+
+// ---------- TRANSLATIONS ----------
+const lang = {
+    ar: {
+        splashTitle: "ثقة وأمان",
+        splashSubtitle: "ابنِ سمعتك الرقمية، مفتاحًا بمفتاح<br>Build your reputation, key by key",
+        splashInfo: "النسخة المجانية: معاملات تجريبية فقط. الاشتراك السنوي 1 Pi للوصول الكامل.",
+        btnFreeTrial: "🆓 تجربة مجانية",
+        btnSubscribeNow: "🌟 اشترك الآن (1 Pi)",
+        repLabel: "درجة ميثاق",
+        labelCompleted: "إنجاز",
+        labelDiversity: "تنوع",
+        labelStake: "رهان",
+        trustGraphLabel: "شبكة ثقتك",
+        tabPending: "قيد الانتظار",
+        tabActive: "نشطة",
+        tabCompleted: "مكتملة",
+        navHome: "الرئيسية",
+        navSettings: "الإعدادات",
+        navSupport: "الدعم",
+        navAbout: "حول",
+        newContractTitle: "📝 إنشاء عقد جديد",
+        lblContractType: "نوع العقد",
+        optSale: "عقد بيع مباشر",
+        optFreelance: "عقد عمل حر",
+        optLoan: "عقد قرض شخصي",
+        optSocial: "تعهد اجتماعي",
+        optRental: "عقد إيجار مؤقت",
+        lblCounterparty: "الطرف الآخر (اسم المستخدم)",
+        lblDesc: "وصف الالتزام",
+        lblValue: "القيمة (Pi)",
+        lblDuration: "مدة التسليم (ساعات)",
+        lblSellerKey: "رقمك السري (6 أرقام)",
+        lblStake: "الضمان المرهون (Pi) - اختياري",
+        privacyNote: "🔒 بياناتك مشفرة ولا يطلع عليها أحد",
+        btnSubmitContract: "إرسال الالتزام",
+        btnJoin: "انضمام",
+        joinPlaceholder: "أدخل رقم العقد للانضمام",
+        aboutTitle: "ℹ️ حول التطبيق",
+        aboutIdeaTitle: "💡 الفكرة",
+        aboutIdeaText: "\"ثقة وأمان\" هو منصة لا مركزية لبناء السمعة الرقمية على شبكة Pi. يسمح للأفراد بإبرام عقود ذكية مشروطة دون الحاجة لوسيط، مع ضمان الخصوصية التامة.",
+        aboutWorkTitle: "⚙️ كيف يعمل",
+        aboutWork1: "أنشئ عقدًا مع الطرف الآخر واختر رقمًا سريًا.",
+        aboutWork2: "يقبل الطرف الآخر العقد ويدخل رقمه السري (القفل المزدوج).",
+        aboutWork3: "تُنشأ محفظة مؤقتة وتحفظ الأموال حتى التسليم.",
+        aboutWork4: "عند تبادل الرقمين السريين، يتم تحرير الدفع وإثبات السمعة.",
+        aboutBenefitsTitle: "🌟 الفوائد",
+        aboutBenefit1: "سمعة رقمية لا يمكن تزويرها بفضل خوارزميات التنوع والرهان.",
+        aboutBenefit2: "خصوصية مطلقة: حتى المطور لا يرى بياناتك.",
+        aboutBenefit3: "عقود متنوعة (بيع، عمل حر، قرض، إيجار، تعهدات).",
+        aboutBenefit4: "نظام نزاعات لا مركزي يحمي الطرفين.",
+        btnSupport: "❤️ دعم التطبيق (تبرع Pi)"
+    },
+    en: {
+        splashTitle: "Trust & Safety",
+        splashSubtitle: "Build your digital reputation, key by key<br>ابنِ سمعتك الرقمية، مفتاحًا بمفتاح",
+        splashInfo: "Free version: trial only. Annual subscription 1 Pi for full access.",
+        btnFreeTrial: "🆓 Free Trial",
+        btnSubscribeNow: "🌟 Subscribe Now (1 Pi)",
+        repLabel: "Mithaq Score",
+        labelCompleted: "Completed",
+        labelDiversity: "Diversity",
+        labelStake: "Stake",
+        trustGraphLabel: "Your Trust Network",
+        tabPending: "Pending",
+        tabActive: "Active",
+        tabCompleted: "Completed",
+        navHome: "Home",
+        navSettings: "Settings",
+        navSupport: "Support",
+        navAbout: "About",
+        newContractTitle: "📝 New Contract",
+        lblContractType: "Contract Type",
+        optSale: "Direct Sale",
+        optFreelance: "Freelance",
+        optLoan: "Personal Loan",
+        optSocial: "Social Pledge",
+        optRental: "Temporary Rental",
+        lblCounterparty: "Counterparty (username)",
+        lblDesc: "Description",
+        lblValue: "Value (Pi)",
+        lblDuration: "Duration (hours)",
+        lblSellerKey: "Your Secret Key (6 digits)",
+        lblStake: "Stake (Pi) - optional",
+        privacyNote: "🔒 Encrypted & private",
+        btnSubmitContract: "Send Commitment",
+        btnJoin: "Join",
+        joinPlaceholder: "Enter contract ID to join",
+        aboutTitle: "ℹ️ About",
+        aboutIdeaTitle: "💡 The Idea",
+        aboutIdeaText: "\"Trust & Safety\" is a decentralized reputation building platform on the Pi Network. It allows individuals to create conditional smart contracts without a middleman, with full privacy.",
+        aboutWorkTitle: "⚙️ How It Works",
+        aboutWork1: "Create a contract with the other party and choose a secret key.",
+        aboutWork2: "The counterparty accepts and enters their secret key (double lock).",
+        aboutWork3: "A temporary wallet is created and funds held until delivery.",
+        aboutWork4: "When both keys are entered, payment is released and reputation is updated.",
+        aboutBenefitsTitle: "🌟 Benefits",
+        aboutBenefit1: "Tamper-proof digital reputation via diversity and stake algorithms.",
+        aboutBenefit2: "Absolute privacy: even the developer sees nothing.",
+        aboutBenefit3: "Multiple contract types (sale, freelance, loan, rental, pledges).",
+        aboutBenefit4: "Decentralized dispute system protects both parties.",
+        btnSupport: "❤️ Support the App (Donate Pi)"
+    }
+};
+
+let currentLang = 'ar';
+
+// ---------- APP STATE ----------
+const APP_KEY = 'trust_safety_app_v2';
+
+function loadAppState() {
+    const saved = localStorage.getItem(APP_KEY);
+    if (saved) {
+        try {
+            const parsed = JSON.parse(saved);
+            return {
+                subscribed: parsed.subscribed !== undefined ? parsed.subscribed : true,
+                mithaqScore: parsed.mithaqScore || 87,
+                completedCount: parsed.completedCount || 94,
+                diversityIndex: parsed.diversityIndex || 62,
+                stakeIndex: parsed.stakeIndex || 78,
+                commitments: parsed.commitments || [],
+                nextId: parsed.nextId || 1001
+            };
+        } catch (e) {}
+    }
+    return {
+        subscribed: true,
+        mithaqScore: 87,
+        completedCount: 94,
+        diversityIndex: 62,
+        stakeIndex: 78,
+        commitments: [],
+        nextId: 1001
+    };
+}
+
+function saveAppState() {
+    localStorage.setItem(APP_KEY, JSON.stringify(APP));
+}
+
+let APP = loadAppState();
+let currentContractId = null; // لتخزين رقم العقد مؤقتًا عند عرض التفاصيل
+
+// ---------- TRANSLATION HELPERS ----------
+function t(key) {
+    return lang[currentLang][key] || key;
+}
+
+function applyLanguage() {
+    document.getElementById('splashTitle').innerText = t('splashTitle');
+    document.getElementById('splashSubtitle').innerHTML = t('splashSubtitle');
+    document.getElementById('splashInfo').innerText = t('splashInfo');
+    document.getElementById('btnFreeTrial').innerText = t('btnFreeTrial');
+    document.getElementById('btnSubscribeNow').innerText = t('btnSubscribeNow');
+    document.getElementById('repLabel').innerText = t('repLabel');
+    document.getElementById('labelCompleted').innerText = t('labelCompleted');
+    document.getElementById('labelDiversity').innerText = t('labelDiversity');
+    document.getElementById('labelStake').innerText = t('labelStake');
+    document.getElementById('trustGraphLabel').innerText = t('trustGraphLabel');
+    document.getElementById('tabPending').innerText = t('tabPending');
+    document.getElementById('tabActive').innerText = t('tabActive');
+    document.getElementById('tabCompleted').innerText = t('tabCompleted');
+    document.getElementById('navHome').innerText = t('navHome');
+    document.getElementById('navSettings').innerText = t('navSettings');
+    document.getElementById('navSupport').innerText = t('navSupport');
+    document.getElementById('navAbout').innerText = t('navAbout');
+    document.getElementById('newContractTitle').innerText = t('newContractTitle');
+    document.getElementById('lblContractType').innerText = t('lblContractType');
+    document.getElementById('optSale').innerText = t('optSale');
+    document.getElementById('optFreelance').innerText = t('optFreelance');
+    document.getElementById('optLoan').innerText = t('optLoan');
+    document.getElementById('optSocial').innerText = t('optSocial');
+    document.getElementById('optRental').innerText = t('optRental');
+    document.getElementById('lblCounterparty').innerText = t('lblCounterparty');
+    document.getElementById('lblDesc').innerText = t('lblDesc');
+    document.getElementById('lblValue').innerText = t('lblValue');
+    document.getElementById('lblDuration').innerText = t('lblDuration');
+    document.getElementById('lblSellerKey').innerText = t('lblSellerKey');
+    document.getElementById('lblStake').innerText = t('lblStake');
+    document.getElementById('privacyNote').innerText = t('privacyNote');
+    document.getElementById('btnSubmitContract').innerText = t('btnSubmitContract');
+    document.getElementById('btnJoin').innerText = t('btnJoin');
+    document.getElementById('joinContractId').placeholder = t('joinPlaceholder');
+    document.getElementById('langIndicator').innerText = currentLang === 'ar' ? 'AR' : 'EN';
+    document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+    document.documentElement.lang = currentLang;
+    if(document.getElementById('settingsLang')) document.getElementById('settingsLang').value = currentLang;
+
+    document.getElementById('aboutTitle').innerText = t('aboutTitle');
+    document.getElementById('aboutIdeaTitle').innerText = t('aboutIdeaTitle');
+    document.getElementById('aboutIdeaText').innerText = t('aboutIdeaText');
+    document.getElementById('aboutWorkTitle').innerText = t('aboutWorkTitle');
+    document.getElementById('aboutWork1').innerText = t('aboutWork1');
+    document.getElementById('aboutWork2').innerText = t('aboutWork2');
+    document.getElementById('aboutWork3').innerText = t('aboutWork3');
+    document.getElementById('aboutWork4').innerText = t('aboutWork4');
+    document.getElementById('aboutBenefitsTitle').innerText = t('aboutBenefitsTitle');
+    document.getElementById('aboutBenefit1').innerText = t('aboutBenefit1');
+    document.getElementById('aboutBenefit2').innerText = t('aboutBenefit2');
+    document.getElementById('aboutBenefit3').innerText = t('aboutBenefit3');
+    document.getElementById('aboutBenefit4').innerText = t('aboutBenefit4');
+    document.getElementById('btnSupport').innerText = t('btnSupport');
+}
+
+function setLanguage(langCode) {
+    currentLang = langCode;
+    applyLanguage();
+}
+
+// ---------- UI HELPERS ----------
+function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+}
+
+function openModal(id) {
+    document.getElementById(id).classList.add('active');
+    if (id === 'modalSettings') {
+        document.getElementById('settingsSubStatus').value = APP.subscribed ? 'مشترك' : 'مجاني';
+        document.getElementById('btnToggleSub').innerText = APP.subscribed ? 'إلغاء الاشتراك' : 'اشترك الآن';
+    }
+    if (id === 'modalAbout') {
+        applyLanguage();
+    }
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+function navigateTo(section) {
+    if (section === 'home') showScreen('screenMain');
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    const navItems = document.querySelectorAll('.nav-item');
+    navItems.forEach(item => {
+        if (item.innerText.includes(t('navHome')) && section==='home') item.classList.add('active');
+        if (item.innerText.includes(t('navSettings')) && section==='settings') item.classList.add('active');
+        if (item.innerText.includes(t('navSupport')) && section==='support') item.classList.add('active');
+        if (item.innerText.includes(t('navAbout')) && section==='about') item.classList.add('active');
+    });
+}
+
+// ---------- SUBSCRIPTION ----------
+function startFreeTrial() {
+    APP.subscribed = false;
+    saveAppState();
+    updateSubscriptionBadge();
+    showScreen('screenMain');
+}
+
+function startSubscribed() {
+    simulatePayment(1, 'اشتراك سنوي');
+    APP.subscribed = true;
+    saveAppState();
+    updateSubscriptionBadge();
+    showScreen('screenMain');
+}
+
+function simulatePayment(amount, description) {
+    alert(`محاكاة: تم تحويل ${amount} Pi إلى محفظة المطور ${DEVELOPER_WALLET} (${description}).\nفي التطبيق الفعلي، سيتم الدفع عبر شبكة Pi.`);
+}
+
+function updateSubscriptionBadge() {
+    const badge = document.getElementById('badgeSub');
+    if (APP.subscribed) {
+        badge.innerText = 'مشترك';
+        badge.style.background = 'var(--green)';
+    } else {
+        badge.innerText = 'مجاني';
+        badge.style.background = 'var(--text-muted)';
+    }
+}
+
+function toggleSubscription() {
+    if (APP.subscribed) {
+        APP.subscribed = false;
+        saveAppState();
+        updateSubscriptionBadge();
+        closeModal('modalSettings');
+        alert('تم إلغاء الاشتراك. لن تسترد الرسوم المدفوعة.');
+    } else {
+        simulatePayment(1, 'تجديد اشتراك سنوي');
+        APP.subscribed = true;
+        saveAppState();
+        updateSubscriptionBadge();
+        closeModal('modalSettings');
+        alert('تم الاشتراك بنجاح. المبلغ غير قابل للاسترداد.');
+    }
+}
+
+function deleteAccount() {
+    if (confirm('هل أنت متأكد من حذف الحساب؟ ستفقد كل بيانات السمعة ولن تسترد أي مدفوعات.')) {
+        localStorage.removeItem(APP_KEY);
+        APP = {
+            subscribed: false,
+            mithaqScore: 0,
+            completedCount: 0,
+            diversityIndex: 0,
+            stakeIndex: 0,
+            commitments: [],
+            nextId: 1001
+        };
+        saveAppState();
+        closeModal('modalSettings');
+        showScreen('screenSplash');
+        alert('تم حذف الحساب بنجاح.');
+    }
+}
+
+// ---------- CONTRACTS ----------
+function updateContractFields() {
+    const type = document.getElementById('contractType').value;
+    document.getElementById('groupValue').style.display = (type === 'social') ? 'none' : 'block';
+    document.getElementById('groupDuration').style.display = (type === 'social') ? 'none' : 'block';
+    document.getElementById('groupStake').style.display = (type === 'social') ? 'none' : 'block';
+}
+
+function submitContract() {
+    const type = document.getElementById('contractType').value;
+    const counterparty = document.getElementById('counterpartyInput').value.trim();
+    const desc = document.getElementById('descInput').value.trim();
+    const value = document.getElementById('valueInput').value;
+    const duration = document.getElementById('durationInput').value;
+    const sellerKey = document.getElementById('sellerKeyInput').value;
+    const stake = document.getElementById('stakeInput').value;
+
+    if (!counterparty) { alert('يرجى إدخال اسم المستخدم للطرف الآخر.'); return; }
+    if (!desc) { alert('يرجى إدخال وصف الالتزام.'); return; }
+    if (!sellerKey || sellerKey.length !== 6) { alert('يرجى إدخال رقم سري مكون من 6 أرقام.'); return; }
+    if (type !== 'social') {
+        if (!value || parseFloat(value) <= 0) { alert('يرجى إدخال قيمة العقد بشكل صحيح.'); return; }
+        if (!duration || parseInt(duration) <= 0) { alert('يرجى إدخال مدة التسليم.'); return; }
+    }
+
+    const id = APP.nextId++; // استخدام الرقم الحالي ثم زيادته
+    const contract = {
+        id,
+        type,
+        counterparty,
+        desc,
+        value: parseFloat(value||0),
+        duration: parseInt(duration||24),
+        sellerKeyHash: hashString(sellerKey),
+        stake: parseFloat(stake||0),
+        status: 'pending',
+        buyerKeyHash: null
+    };
+    APP.commitments.push(contract);
+    saveAppState();
+    closeModal('modalNewContract');
+    alert(`تم إنشاء العقد بنجاح. رقم العقد: ${id}. أرسل هذا الرقم للطرف الآخر للانضمام.`);
+    renderCommitments('pending');
+    document.getElementById('counterpartyInput').value='';
+    document.getElementById('descInput').value='';
+    document.getElementById('valueInput').value='';
+    document.getElementById('durationInput').value='';
+    document.getElementById('sellerKeyInput').value='';
+    document.getElementById('stakeInput').value='';
+}
+
+function hashString(str) {
+    let hash = 0;
+    for (let i=0;i<str.length;i++) { hash = ((hash<<5)-hash)+str.charCodeAt(i); hash|=0; }
+    return 'hash_'+Math.abs(hash).toString(16);
+}
+
+function joinContract() {
+    const idInput = document.getElementById('joinContractId').value.trim();
+    if (!idInput) { alert('يرجى إدخال رقم العقد.'); return; }
+    const contract = APP.commitments.find(c=> c.id == idInput);
+    if (!contract) { alert('رقم العقد غير موجود. تأكد من الرقم الصحيح.'); return; }
+    if (contract.status !== 'pending') { alert('هذا العقد لم يعد متاحًا للانضمام.'); return; }
+
+    // تخزين رقم العقد الحالي
+    currentContractId = contract.id;
+
+    // عرض تفاصيل العقد في النافذة
+    const detailsDiv = document.getElementById('contractDetailsContent');
+    detailsDiv.innerHTML = `
+        <p><strong>نوع العقد:</strong> ${contract.type}</p>
+        <p><strong>الطرف الأول:</strong> ${contract.counterparty}</p>
+        <p><strong>الوصف:</strong> ${contract.desc}</p>
+        <p><strong>القيمة:</strong> ${contract.value} Pi</p>
+        <p><strong>المدة:</strong> ${contract.duration} ساعة</p>
+        <p><strong>الضمان المرهون:</strong> ${contract.stake} Pi</p>
+        <p style="margin-top:8px;color:var(--gold);"><strong>رقم العقد:</strong> ${contract.id}</p>
+    `;
+
+    openModal('modalContractDetails');
+}
+
+function acceptContract() {
+    const buyerKey = document.getElementById('buyerKeyInput').value;
+    if (!buyerKey || buyerKey.length !== 6) {
+        alert('يرجى إدخال رقم سري مكون من 6 أرقام.');
+        return;
+    }
+
+    const contract = APP.commitments.find(c=> c.id == currentContractId);
+    if (!contract) {
+        alert('حدث خطأ. العقد لم يعد موجودًا.');
+        closeModal('modalContractDetails');
+        return;
+    }
+
+    contract.buyerKeyHash = hashString(buyerKey);
+    contract.status = 'active';
+    saveAppState();
+    closeModal('modalContractDetails');
+    document.getElementById('buyerKeyInput').value = '';
+    alert('تم قبول العقد بنجاح. العقد نشط الآن.');
+    renderCommitments('pending');
+}
+
+function openNewContractModal() {
+    if (!APP.subscribed) { alert('الرجاء الاشتراك للوصول الكامل'); return; }
+    openModal('modalNewContract');
+}
+
+function openDeliveryModal() { openModal('modalDelivery'); }
+
+function releaseFunds() {
+    const sk = document.getElementById('deliverySellerKey').value;
+    const bk = document.getElementById('deliveryBuyerKey').value;
+    if (!sk||sk.length!==6||!bk||bk.length!==6) { alert('أدخل الرقمين السريين (6 أرقام لكل منهما).'); return; }
+    closeModal('modalDelivery');
+    APP.mithaqScore = Math.min(100, APP.mithaqScore+2);
+    APP.completedCount++;
+    saveAppState();
+    document.getElementById('mithaqScore').innerText = APP.mithaqScore;
+    document.getElementById('statCompleted').innerText = APP.completedCount;
+    document.getElementById('repBar').style.width = APP.mithaqScore+'%';
+    alert('تم التحرير بنجاح');
+}
+
+function openDispute() { closeModal('modalDelivery'); openModal('modalDispute'); }
+function confirmDispute() { closeModal('modalDispute'); alert('تم فتح النزاع'); }
+
+// ---------- COMMITMENT LIST ----------
+function switchTab(tab) {
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    event.target.classList.add('active');
+    renderCommitments(tab);
+}
+
+function renderCommitments(filter) {
+    const list = document.getElementById('commitmentList');
+    list.innerHTML = '';
+    const filtered = APP.commitments.filter(c=> c.status === filter);
+    if (filtered.length === 0) {
+        list.innerHTML = '<p style="text-align:center;color:var(--text-muted);">لا توجد التزامات</p>';
+        return;
+    }
+    filtered.forEach(c=>{
+        const div = document.createElement('div');
+        div.className = 'commitment-item';
+        div.innerHTML = `
+            <div class="commitment-header">
+                <span class="commitment-type">${c.type}</span>
+                <span class="${c.status==='active'?'status-active':c.status==='completed'?'status-completed':'status-active'}">${c.status}</span>
+            </div>
+            <p>${c.desc} — ${c.value} Pi — مع ${c.counterparty}</p>
+            <small style="color:var(--text-muted);">رقم العقد: ${c.id}</small>
+            ${c.status==='active' ? '<button class="btn btn-small btn-gold" onclick="openDeliveryModal()">تحرير التسليم</button>' : ''}
+        `;
+        list.appendChild(div);
+    });
+}
+
+// ---------- SUPPORT & DONATIONS ----------
+function sendSuggestion() {
+    const text = document.getElementById('suggestionText').value.trim();
+    if (!text) { alert('اكتب اقتراحك أولاً'); return; }
+    alert('شكراً على اقتراحك! سنراجعه قريباً.');
+    document.getElementById('suggestionText').value = '';
+}
+
+function sendReport() {
+    const text = document.getElementById('reportText').value.trim();
+    if (!text) { alert('صف المشكلة أولاً'); return; }
+    alert('تم استلام بلاغك. سنتواصل معك.');
+    document.getElementById('reportText').value = '';
+}
+
+function donate() {
+    const amount = document.getElementById('donateAmount').value;
+    if (!amount || parseFloat(amount) <= 0) { alert('يرجى إدخال مبلغ صحيح للتبرع.'); return; }
+    simulatePayment(parseFloat(amount), 'تبرع لتطوير التطبيق');
+    document.getElementById('donateAmount').value = '';
+}
+
+function supportDeveloper() {
+    alert(`شكراً لدعمك! يمكنك تحويل أي مبلغ من Pi إلى محفظة المطور:\n${DEVELOPER_WALLET}`);
+}
+
+// ---------- INIT ----------
+function init() {
+    applyLanguage();
+    updateSubscriptionBadge();
+    document.getElementById('mithaqScore').innerText = APP.mithaqScore;
+    document.getElementById('statCompleted').innerText = APP.completedCount;
+    document.getElementById('statDiversity').innerText = APP.diversityIndex;
+    document.getElementById('statStake').innerText = APP.stakeIndex;
+    document.getElementById('repBar').style.width = APP.mithaqScore + '%';
+    showScreen('screenSplash');
+}
+
+init();
+</script>
+</body>
+</html>
